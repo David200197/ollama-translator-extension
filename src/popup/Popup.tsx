@@ -1,8 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Settings, Zap, Wifi, WifiOff, Loader2 } from "lucide-react";
+import {
+  Settings,
+  Zap,
+  Wifi,
+  WifiOff,
+  Loader2,
+  BookOpen,
+  PenLine,
+} from "lucide-react";
 import { Button } from "../components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
 import { getConfig } from "../services/storage";
 import { OllamaService } from "../services/ollama";
@@ -33,9 +46,19 @@ function Popup() {
 
   const openOptions = () => chrome.runtime.openOptionsPage();
 
-  if (!config) return <div className="p-4 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></div>;
+  if (!config)
+    return (
+      <div className="p-4 text-center">
+        <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+      </div>
+    );
 
-  const targetLang = SUPPORTED_LANGUAGES.find(l => l.code === config.targetLanguage)?.name || "English";
+  const readLang =
+    SUPPORTED_LANGUAGES.find((l) => l.code === config.readLanguage)?.name ||
+    "Spanish";
+  const writeLang =
+    SUPPORTED_LANGUAGES.find((l) => l.code === config.writeLanguage)?.name ||
+    "English";
 
   return (
     <div className="p-4 bg-background">
@@ -55,15 +78,27 @@ function Popup() {
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Status</span>
               <Badge
-                variant={status === "connected" ? "success" : status === "checking" ? "warning" : "destructive"}
+                variant={
+                  status === "connected"
+                    ? "success"
+                    : status === "checking"
+                      ? "warning"
+                      : "destructive"
+                }
                 className="gap-1"
               >
                 {status === "connected" ? (
-                  <><Wifi className="h-3 w-3" /> Connected</>
+                  <>
+                    <Wifi className="h-3 w-3" /> Connected
+                  </>
                 ) : status === "checking" ? (
-                  <><Loader2 className="h-3 w-3 animate-spin" /> Checking</>
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" /> Checking
+                  </>
                 ) : (
-                  <><WifiOff className="h-3 w-3" /> Offline</>
+                  <>
+                    <WifiOff className="h-3 w-3" /> Offline
+                  </>
                 )}
               </Badge>
             </div>
@@ -75,18 +110,41 @@ function Popup() {
               </span>
             </div>
 
+            {/* Reading Language */}
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Target</span>
-              <span className="text-sm font-medium">{targetLang}</span>
+              <span className="text-sm text-muted-foreground flex items-center gap-1">
+                <BookOpen className="h-3 w-3" /> Read
+              </span>
+              <span className="text-sm font-medium">{readLang}</span>
+            </div>
+
+            {/* Writing Language */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground flex items-center gap-1">
+                <PenLine className="h-3 w-3" /> Write
+              </span>
+              <span className="text-sm font-medium">{writeLang}</span>
             </div>
           </div>
 
           {/* Shortcut */}
-          <div className="flex items-center justify-center gap-2 p-3 rounded-lg border border-primary" style={{ borderColor: 'rgba(79,172,254,0.3)', background: 'rgba(79,172,254,0.05)' }}>
-            <kbd className="px-2 py-1 rounded-md bg-secondary text-xs font-semibold">Alt</kbd>
+          <div
+            className="flex items-center justify-center gap-2 p-3 rounded-lg border border-primary"
+            style={{
+              borderColor: "rgba(79,172,254,0.3)",
+              background: "rgba(79,172,254,0.05)",
+            }}
+          >
+            <kbd className="px-2 py-1 rounded-md bg-secondary text-xs font-semibold">
+              Alt
+            </kbd>
             <span className="text-muted-foreground">+</span>
-            <kbd className="px-2 py-1 rounded-md bg-secondary text-xs font-semibold">T</kbd>
-            <span className="text-sm text-muted-foreground ml-2">to translate</span>
+            <kbd className="px-2 py-1 rounded-md bg-secondary text-xs font-semibold">
+              T
+            </kbd>
+            <span className="text-sm text-muted-foreground ml-2">
+              to translate
+            </span>
           </div>
 
           {/* Settings Button */}
@@ -97,13 +155,26 @@ function Popup() {
 
           {/* Warnings */}
           {status === "disconnected" && (
-            <div className="p-3 rounded-lg text-sm text-destructive" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
+            <div
+              className="p-3 rounded-lg text-sm text-destructive"
+              style={{
+                background: "rgba(239,68,68,0.1)",
+                border: "1px solid rgba(239,68,68,0.2)",
+              }}
+            >
               Ollama not running on {config.ollamaHost}:{config.ollamaPort}
             </div>
           )}
 
           {!config.selectedModel && status === "connected" && (
-            <div className="p-3 rounded-lg text-sm" style={{ color: '#eab308', background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.2)' }}>
+            <div
+              className="p-3 rounded-lg text-sm"
+              style={{
+                color: "#eab308",
+                background: "rgba(234,179,8,0.1)",
+                border: "1px solid rgba(234,179,8,0.2)",
+              }}
+            >
               Please select a model in settings
             </div>
           )}

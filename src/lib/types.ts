@@ -10,7 +10,8 @@ export interface TranslatorConfig {
   ollamaPort: number;
   ollamaHost: string;
   selectedModel: string;
-  targetLanguage: string;
+  readLanguage: string;   // Idioma al traducir texto seleccionado (lectura)
+  writeLanguage: string;  // Idioma al traducir en campos de texto (escritura)
 }
 
 export const SUPPORTED_LANGUAGES = [
@@ -50,5 +51,6 @@ export const DEFAULT_CONFIG: TranslatorConfig = {
   ollamaPort: 11434,
   ollamaHost: "localhost",
   selectedModel: "",
-  targetLanguage: "en"
+  readLanguage: "es",   // Por defecto traduce lo que lees a español
+  writeLanguage: "en"   // Por defecto traduce lo que escribes a inglés
 };

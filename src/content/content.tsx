@@ -604,7 +604,7 @@ const insertTextIntoElement = async (
 // TRANSLATION HANDLERS
 // ============================================================================
 
-// Handle input field translation
+// Handle input field translation (WRITING - usa writeLanguage)
 const handleInputTranslation = async (element: HTMLElement) => {
   let text = "";
 
@@ -635,8 +635,9 @@ const handleInputTranslation = async (element: HTMLElement) => {
       return;
     }
 
+    // Usar writeLanguage para campos de entrada (escritura)
     const targetLang =
-      SUPPORTED_LANGUAGES.find((l) => l.code === config.targetLanguage)?.name ||
+      SUPPORTED_LANGUAGES.find((l) => l.code === config.writeLanguage)?.name ||
       "English";
 
     // Traducir usando background script
@@ -658,7 +659,7 @@ const handleInputTranslation = async (element: HTMLElement) => {
     const result = await insertTextIntoElement(targetElement, translated);
 
     if (result.success) {
-      showNotification(`✓ Translated! (${result.method})`);
+      showNotification(`✓ Translated to ${targetLang}!`);
     } else {
       // Último fallback: copiar al portapapeles
       await navigator.clipboard.writeText(translated);
@@ -670,7 +671,7 @@ const handleInputTranslation = async (element: HTMLElement) => {
   }
 };
 
-// Handle selection translation
+// Handle selection translation (READING - usa readLanguage)
 const handleSelectionTranslation = async () => {
   const selection = window.getSelection();
   const text = selection?.toString().trim();
@@ -694,9 +695,10 @@ const handleSelectionTranslation = async () => {
       return;
     }
 
+    // Usar readLanguage para texto seleccionado (lectura)
     const targetLang =
-      SUPPORTED_LANGUAGES.find((l) => l.code === config.targetLanguage)?.name ||
-      "English";
+      SUPPORTED_LANGUAGES.find((l) => l.code === config.readLanguage)?.name ||
+      "Spanish";
 
     // Traducir usando background script
     const translated = await sendToBackground<string>({
