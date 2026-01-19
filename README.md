@@ -221,4 +221,3 @@ ollama-translator/
 ## 📄 License
 
 MIT
-```
