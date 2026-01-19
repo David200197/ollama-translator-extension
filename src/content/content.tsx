@@ -19,7 +19,7 @@ function sendToBackground<T>(message: {
   });
 }
 
-// Calculate reading time: ~200 WPM, min 2s, max 30s
+// Calculate reading time
 const calculateReadingTime = (text: string): number => {
   const words = text.trim().split(/\s+/).length;
   const ms = (words / 200) * 60 * 1000 + 1000;
@@ -34,587 +34,237 @@ const injectStyles = () => {
   style.id = "ollama-translator-styles";
   style.textContent = `
     .ot-popup {
-      position: fixed;
-      z-index: 2147483647;
-      max-width: 360px;
-      min-width: 220px;
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(79,172,254,0.15);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      color: #f1f5f9;
-      animation: ot-slideIn 0.2s ease-out;
+      position: fixed; z-index: 2147483647; top: 20px; left: 50%; transform: translateX(-50%);
+      width: auto; max-width: min(600px, calc(100vw - 40px)); min-width: 300px;
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px 20px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5); font-family: -apple-system, sans-serif; color: #f1f5f9;
+      animation: ot-slideDown 0.25s ease-out;
     }
-    @keyframes ot-slideIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .ot-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .ot-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: #4facfe;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .ot-close {
-      background: transparent;
-      border: none;
-      color: #94a3b8;
-      cursor: pointer;
-      padding: 4px;
-      border-radius: 6px;
-      font-size: 18px;
-      line-height: 1;
-    }
-    .ot-close:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
-    .ot-text {
-      font-size: 14px;
-      line-height: 1.6;
-      margin-bottom: 12px;
-      word-wrap: break-word;
-    }
+    @keyframes ot-slideDown { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+    .ot-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #334155; }
+    .ot-title { font-size: 12px; font-weight: 600; color: #4facfe; text-transform: uppercase; letter-spacing: 1px; }
+    .ot-close { background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; }
+    .ot-close:hover { color: #ef4444; }
+    .ot-text { font-size: 15px; line-height: 1.7; margin-bottom: 14px; max-height: 60vh; overflow-y: auto; white-space: pre-wrap; }
     .ot-actions { display: flex; gap: 8px; margin-bottom: 12px; }
-    .ot-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(79,172,254,0.15);
-      border: 1px solid rgba(79,172,254,0.3);
-      color: #4facfe;
-      padding: 8px 14px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .ot-btn:hover { background: rgba(79,172,254,0.25); border-color: #4facfe; }
+    .ot-btn { background: rgba(79,172,254,0.15); border: 1px solid rgba(79,172,254,0.3); color: #4facfe; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; }
+    .ot-btn:hover { background: rgba(79,172,254,0.25); }
     .ot-progress { height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
-    .ot-progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #4facfe, #00f2fe);
-      border-radius: 2px;
-      transition: width 0.05s linear;
-    }
+    .ot-progress-fill { height: 100%; background: linear-gradient(90deg, #4facfe, #00f2fe); width: 100%; }
     .ot-hint { margin-top: 8px; font-size: 10px; color: #94a3b8; text-align: center; }
-    .ot-loading {
-      position: fixed;
-      z-index: 2147483647;
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 14px 20px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      color: #f1f5f9;
-      animation: ot-fadeIn 0.2s ease-out;
-    }
-    @keyframes ot-fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .ot-spinner {
-      width: 20px;
-      height: 20px;
-      border: 2px solid rgba(79,172,254,0.3);
-      border-top-color: #4facfe;
-      border-radius: 50%;
-      animation: ot-spin 0.8s linear infinite;
-    }
+    
+    .ot-loading { position: fixed; z-index: 2147483647; top: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; padding: 14px 24px; border-radius: 10px; color: #f1f5f9; display: flex; align-items: center; gap: 10px; }
+    .ot-spinner { width: 16px; height: 16px; border: 2px solid rgba(79,172,254,0.3); border-top-color: #4facfe; border-radius: 50%; animation: ot-spin 0.8s linear infinite; }
     @keyframes ot-spin { to { transform: rotate(360deg); } }
-    .ot-notification {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 14px 20px;
-      font-size: 13px;
-      z-index: 2147483647;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-      animation: ot-slideUp 0.3s ease-out;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      color: #f1f5f9;
-    }
-    .ot-notification.error { border-color: rgba(239,68,68,0.5); }
-    .ot-notification.warning { border-color: rgba(234,179,8,0.5); color: #fbbf24; }
+    
+    .ot-notification { position: fixed; bottom: 20px; right: 20px; background: #1e293b; border: 1px solid #334155; padding: 12px 20px; border-radius: 8px; color: #f1f5f9; z-index: 2147483647; animation: ot-slideUp 0.3s; }
+    .ot-notification.error { border-color: #ef4444; }
     @keyframes ot-slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   `;
   document.head.appendChild(style);
 };
 
-// State
 let currentPopup: HTMLElement | null = null;
 let progressInterval: number | null = null;
 let isPaused = false;
 
-// Remove popup
 const removePopup = () => {
-  if (currentPopup) {
-    currentPopup.remove();
-    currentPopup = null;
-  }
-  if (progressInterval) {
-    clearInterval(progressInterval);
-    progressInterval = null;
-  }
+  if (currentPopup) { currentPopup.remove(); currentPopup = null; }
+  if (progressInterval) { clearInterval(progressInterval); progressInterval = null; }
   isPaused = false;
 };
 
-// Show notification
 const showNotification = (text: string, type: "success" | "error" | "warning" = "success") => {
-  removePopup();
   const notification = document.createElement("div");
-  notification.className = `ot-notification ${type === "error" ? "error" : type === "warning" ? "warning" : ""}`;
+  notification.className = `ot-notification ${type === "error" ? "error" : ""}`;
   notification.textContent = text;
   document.body.appendChild(notification);
-  setTimeout(() => notification.remove(), 4000);
+  setTimeout(() => notification.remove(), 3000);
 };
 
-// Show loading
-const showLoading = (x: number, y: number) => {
+const showLoading = () => {
   removePopup();
   const loading = document.createElement("div");
   loading.className = "ot-loading";
-  loading.style.left = `${x}px`;
-  loading.style.top = `${y}px`;
   loading.innerHTML = `<div class="ot-spinner"></div><span>Translating...</span>`;
   document.body.appendChild(loading);
   currentPopup = loading;
 };
 
-// Show translation popup
-const showTranslation = (text: string, x: number, y: number) => {
+const showTranslation = (text: string) => {
   removePopup();
-
   const popup = document.createElement("div");
   popup.className = "ot-popup";
-  popup.style.left = `${Math.min(x, window.innerWidth - 380)}px`;
-  popup.style.top = `${Math.max(10, y)}px`;
-
   const readingTime = calculateReadingTime(text);
-  let progress = 100;
-  const startTime = Date.now();
-
   popup.innerHTML = `
     <div class="ot-header">
       <span class="ot-title">Translation</span>
-      <button class="ot-close" title="Close">×</button>
+      <button class="ot-close">×</button>
     </div>
-    <div class="ot-text">${text}</div>
-    <div class="ot-actions">
-      <button class="ot-btn ot-copy">📋 Copy</button>
-    </div>
-    <div class="ot-progress">
-      <div class="ot-progress-fill" style="width: 100%"></div>
-    </div>
-    <div class="ot-hint">Hover to pause</div>
+    <div class="ot-text">${escapeHtml(text)}</div>
+    <div class="ot-actions"><button class="ot-btn">📋 Copy</button></div>
+    <div class="ot-progress"><div class="ot-progress-fill"></div></div>
   `;
-
   document.body.appendChild(popup);
   currentPopup = popup;
 
   popup.querySelector(".ot-close")?.addEventListener("click", removePopup);
-  popup.querySelector(".ot-copy")?.addEventListener("click", async () => {
+  popup.querySelector(".ot-btn")?.addEventListener("click", async () => {
     await navigator.clipboard.writeText(text);
-    showNotification("Copied to clipboard!");
+    showNotification("Copied!");
   });
-
-  popup.addEventListener("mouseenter", () => {
-    isPaused = true;
-  });
-  popup.addEventListener("mouseleave", () => {
-    isPaused = false;
-  });
-
+  
+  // Auto remove logic simplified
   const progressFill = popup.querySelector(".ot-progress-fill") as HTMLElement;
-  const hint = popup.querySelector(".ot-hint") as HTMLElement;
+  let start = Date.now();
+  const interval = setInterval(() => {
+    if (isPaused) return;
+    let pct = 100 - ((Date.now() - start) / readingTime) * 100;
+    if (pct <= 0) { clearInterval(interval); removePopup(); }
+    else progressFill.style.width = `${pct}%`;
+  }, 100);
+  progressInterval = interval;
+};
 
-  progressInterval = window.setInterval(() => {
-    if (isPaused) {
-      hint.textContent = "Paused - move mouse away to continue";
-      return;
-    }
-    hint.textContent = "Hover to pause";
-
-    const elapsed = Date.now() - startTime;
-    progress = Math.max(0, 100 - (elapsed / readingTime) * 100);
-    progressFill.style.width = `${progress}%`;
-
-    if (progress <= 0) removePopup();
-  }, 50);
+const escapeHtml = (text: string): string => {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 };
 
 // ============================================================================
-// ROBUST TEXT INSERTION - Multiple methods for maximum compatibility
+// LÓGICA CORREGIDA PARA MANEJO DE TEXT INPUTS (WhatsApp Fix)
 // ============================================================================
 
-// Seleccionar todo el contenido de un elemento
-const selectAllContent = (element: HTMLElement): void => {
-  element.focus();
-
-  if (
-    element instanceof HTMLInputElement ||
-    element instanceof HTMLTextAreaElement
-  ) {
-    element.select();
-    // Alternativa si select() no funciona
-    element.setSelectionRange(0, element.value.length);
-  } else if (element.isContentEditable) {
-    const selection = window.getSelection();
-    const range = document.createRange();
-    range.selectNodeContents(element);
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-  }
-};
-
-// Verificar si el texto se insertó correctamente
-const verifyInsertion = (element: HTMLElement, expectedText: string): boolean => {
-  if (
-    element instanceof HTMLInputElement ||
-    element instanceof HTMLTextAreaElement
-  ) {
-    return element.value === expectedText;
-  } else if (element.isContentEditable) {
-    const currentText = element.innerText || element.textContent || "";
-    // Comparar sin espacios en blanco extra
-    return currentText.trim() === expectedText.trim();
-  }
+// Detectar editor complejo
+const isComplexEditor = (element: HTMLElement): boolean => {
+  const hostname = window.location.hostname;
+  if (hostname.includes('web.whatsapp.com') || hostname.includes('web.telegram.org')) return true;
+  // Añade otros si es necesario
   return false;
 };
 
-// Disparar todos los eventos necesarios
-const dispatchInputEvents = (element: HTMLElement, text: string): void => {
-  // Evento input básico
-  element.dispatchEvent(new Event("input", { bubbles: true, cancelable: true }));
-
-  // Evento change
-  element.dispatchEvent(new Event("change", { bubbles: true, cancelable: true }));
-
-  // InputEvent moderno (para React, Vue, etc.)
-  try {
-    element.dispatchEvent(
-      new InputEvent("input", {
-        bubbles: true,
-        cancelable: true,
-        inputType: "insertText",
-        data: text,
-      })
-    );
-  } catch (e) {
-    // Algunos navegadores no soportan todas las opciones
-  }
-
-  // Eventos de teclado (algunos frameworks los necesitan)
-  element.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "a" }));
-  element.dispatchEvent(new KeyboardEvent("keypress", { bubbles: true, key: "a" }));
-  element.dispatchEvent(new KeyboardEvent("keyup", { bubbles: true, key: "a" }));
-
-  // Evento beforeinput (usado por algunos editores)
-  try {
-    element.dispatchEvent(
-      new InputEvent("beforeinput", {
-        bubbles: true,
-        cancelable: true,
-        inputType: "insertText",
-        data: text,
-      })
-    );
-  } catch (e) {
-    // Ignorar si no es soportado
-  }
+// Disparar eventos de entrada para que React/Vue detecten el cambio
+const triggerInputEvents = (element: HTMLElement) => {
+  element.dispatchEvent(new Event("input", { bubbles: true }));
+  element.dispatchEvent(new Event("change", { bubbles: true }));
 };
 
-// Método 1: execCommand insertText (bueno para contentEditable)
-const tryExecCommandInsertText = (element: HTMLElement, text: string): boolean => {
-  try {
-    element.focus();
-    selectAllContent(element);
-
-    // Pequeño delay para asegurar que la selección se aplicó
-    const success = document.execCommand("insertText", false, text);
-
-    if (success && verifyInsertion(element, text)) {
-      console.log("[OT] Method 1 (execCommand insertText) succeeded");
-      dispatchInputEvents(element, text);
-      return true;
-    }
-  } catch (e) {
-    console.log("[OT] Method 1 failed:", e);
-  }
-  return false;
-};
-
-// Método 2: Clipboard API + execCommand paste (simula Ctrl+V real)
-const tryClipboardPaste = async (element: HTMLElement, text: string): Promise<boolean> => {
-  try {
-    // Guardar clipboard actual
-    let originalClipboard = "";
-    try {
-      originalClipboard = await navigator.clipboard.readText();
-    } catch (e) {
-      // No hay permiso para leer, está bien
-    }
-
-    // Escribir el texto traducido al clipboard
-    await navigator.clipboard.writeText(text);
-
-    element.focus();
-    selectAllContent(element);
-
-    // Simular paste
-    const success = document.execCommand("paste");
-
-    // Restaurar clipboard original después de un pequeño delay
-    setTimeout(async () => {
-      try {
-        if (originalClipboard) {
-          await navigator.clipboard.writeText(originalClipboard);
-        }
-      } catch (e) {
-        // Ignorar errores de restauración
-      }
-    }, 100);
-
-    if (success && verifyInsertion(element, text)) {
-      console.log("[OT] Method 2 (clipboard paste) succeeded");
-      dispatchInputEvents(element, text);
-      return true;
-    }
-  } catch (e) {
-    console.log("[OT] Method 2 failed:", e);
-  }
-  return false;
-};
-
-// Método 3: DataTransfer con InputEvent (para frameworks modernos)
-const tryDataTransferInput = (element: HTMLElement, text: string): boolean => {
-  try {
-    element.focus();
-    selectAllContent(element);
-
-    const dataTransfer = new DataTransfer();
-    dataTransfer.setData("text/plain", text);
-
-    const inputEvent = new InputEvent("input", {
-      bubbles: true,
-      cancelable: true,
-      inputType: "insertFromPaste",
-      data: text,
-      dataTransfer: dataTransfer,
-    });
-
-    element.dispatchEvent(inputEvent);
-
-    // Para input/textarea, también necesitamos asignar el valor
-    if (
-      element instanceof HTMLInputElement ||
-      element instanceof HTMLTextAreaElement
-    ) {
-      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-        element instanceof HTMLInputElement
-          ? window.HTMLInputElement.prototype
-          : window.HTMLTextAreaElement.prototype,
-        "value"
-      )?.set;
-
-      if (nativeInputValueSetter) {
-        nativeInputValueSetter.call(element, text);
-      }
-    }
-
-    if (verifyInsertion(element, text)) {
-      console.log("[OT] Method 3 (DataTransfer) succeeded");
-      dispatchInputEvents(element, text);
-      return true;
-    }
-  } catch (e) {
-    console.log("[OT] Method 3 failed:", e);
-  }
-  return false;
-};
-
-// Método 4: Asignación directa con native setter (para React/Vue inputs)
-const tryNativeSetter = (element: HTMLElement, text: string): boolean => {
-  try {
-    element.focus();
-
-    if (
-      element instanceof HTMLInputElement ||
-      element instanceof HTMLTextAreaElement
-    ) {
-      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-        element instanceof HTMLInputElement
-          ? window.HTMLInputElement.prototype
-          : window.HTMLTextAreaElement.prototype,
-        "value"
-      )?.set;
-
-      if (nativeInputValueSetter) {
-        nativeInputValueSetter.call(element, text);
-        dispatchInputEvents(element, text);
-
-        if (verifyInsertion(element, text)) {
-          console.log("[OT] Method 4 (native setter) succeeded");
-          return true;
-        }
-      }
-    }
-  } catch (e) {
-    console.log("[OT] Method 4 failed:", e);
-  }
-  return false;
-};
-
-// Método 5: Asignación directa simple (fallback básico)
-const tryDirectAssignment = (element: HTMLElement, text: string): boolean => {
-  try {
-    element.focus();
-
-    if (
-      element instanceof HTMLInputElement ||
-      element instanceof HTMLTextAreaElement
-    ) {
-      element.value = text;
-      dispatchInputEvents(element, text);
-
-      if (verifyInsertion(element, text)) {
-        console.log("[OT] Method 5 (direct value) succeeded");
-        return true;
-      }
-    } else if (element.isContentEditable) {
-      // Limpiar y asignar
-      element.innerHTML = "";
-      element.textContent = text;
-      dispatchInputEvents(element, text);
-
-      if (verifyInsertion(element, text)) {
-        console.log("[OT] Method 5 (direct textContent) succeeded");
-        return true;
-      }
-    }
-  } catch (e) {
-    console.log("[OT] Method 5 failed:", e);
-  }
-  return false;
-};
-
-// Método 6: Simular escritura carácter por carácter (último recurso, muy lento pero funciona en casi todo)
-const tryCharacterByCharacter = async (element: HTMLElement, text: string): Promise<boolean> => {
-  try {
-    element.focus();
-    selectAllContent(element);
-
-    // Borrar contenido actual
-    document.execCommand("delete", false);
-
-    // Esperar un momento
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    // Escribir carácter por carácter
-    for (const char of text) {
-      // Disparar eventos de teclado
-      const keydownEvent = new KeyboardEvent("keydown", {
-        key: char,
-        code: `Key${char.toUpperCase()}`,
-        bubbles: true,
-        cancelable: true,
-      });
-      element.dispatchEvent(keydownEvent);
-
-      // Insertar el carácter
-      document.execCommand("insertText", false, char);
-
-      const keyupEvent = new KeyboardEvent("keyup", {
-        key: char,
-        code: `Key${char.toUpperCase()}`,
-        bubbles: true,
-        cancelable: true,
-      });
-      element.dispatchEvent(keyupEvent);
-    }
-
-    dispatchInputEvents(element, text);
-
-    if (verifyInsertion(element, text)) {
-      console.log("[OT] Method 6 (character by character) succeeded");
-      return true;
-    }
-  } catch (e) {
-    console.log("[OT] Method 6 failed:", e);
-  }
-  return false;
-};
-
-// Función principal de inserción - prueba todos los métodos en orden
+// Método principal para insertar texto
 const insertTextIntoElement = async (
   element: HTMLElement,
   text: string
 ): Promise<{ success: boolean; method: string }> => {
-  console.log("[OT] Attempting to insert text, trying multiple methods...");
+  
+  // -------------------------------------------------------------------------
+// CASO 1: WHATSAPP WEB Y EDITORES COMPLEJOS (CONTENTEDITABLE)
+// -------------------------------------------------------------------------
+  if (isComplexEditor(element) && element.isContentEditable) {
+    console.log("[OT] Complex Editor Strategy: Select All + InsertText");
+    
+    try {
+      // 1. Asegurar foco
+      element.focus();
+      
+      // 2. Seleccionar TODO usando execCommand (más seguro que Range API para React)
+      // Esto simula un Ctrl+A real
+      document.execCommand('selectAll', false, undefined);
+      
+      // 3. Pausa breve para permitir que el navegador/React procesen la selección
+      await new Promise(r => setTimeout(r, 20));
 
-  // Método 1: execCommand insertText
-  if (tryExecCommandInsertText(element, text)) {
-    return { success: true, method: "execCommand" };
+      // 4. Insertar el texto. 
+      // execCommand('insertText') reemplaza automáticamente la selección actual.
+      // Es el método más nativo y menos propenso a errores en WhatsApp.
+      const inserted = document.execCommand('insertText', false, text);
+      
+      if (inserted) {
+        triggerInputEvents(element);
+        // Verificación laxa: ¿hay texto?
+        const content = element.innerText || "";
+        if (content.trim().length > 0) {
+          console.log("[OT] Insert successful via execCommand insertText");
+          return { success: true, method: "execCommand-complex" };
+        }
+      }
+    } catch (e) {
+      console.warn("[OT] Complex strategy failed, trying fallback", e);
+    }
+
+    // FALLBACK 1: Clipboard Paste (Si insertText falla)
+    console.log("[OT] Trying Clipboard Paste fallback...");
+    try {
+      const originalClipboard = await navigator.clipboard.readText().catch(() => "");
+      await navigator.clipboard.writeText(text);
+      
+      element.focus();
+      document.execCommand('selectAll', false, undefined);
+      await new Promise(r => setTimeout(r, 20));
+      const pasted = document.execCommand('paste');
+      
+      // Restaurar clipboard si es posible
+      if (originalClipboard) navigator.clipboard.writeText(originalClipboard);
+
+      if (pasted) {
+        triggerInputEvents(element);
+        return { success: true, method: "clipboard-complex" };
+      }
+    } catch (e) {
+      console.error("[OT] Clipboard fallback failed", e);
+    }
+
+    return { success: false, method: "complex-failed" };
   }
 
-  // Método 2: Clipboard + paste
-  if (await tryClipboardPaste(element, text)) {
-    return { success: true, method: "clipboard" };
-  }
-
-  // Método 3: DataTransfer
-  if (tryDataTransferInput(element, text)) {
-    return { success: true, method: "dataTransfer" };
-  }
-
-  // Método 4: Native setter (para React/Vue)
-  if (tryNativeSetter(element, text)) {
-    return { success: true, method: "nativeSetter" };
-  }
-
-  // Método 5: Asignación directa
-  if (tryDirectAssignment(element, text)) {
-    return { success: true, method: "directAssignment" };
-  }
-
-  // Método 6: Carácter por carácter (solo para textos cortos, es lento)
-  if (text.length <= 500) {
-    if (await tryCharacterByCharacter(element, text)) {
-      return { success: true, method: "characterByCharacter" };
+  // -------------------------------------------------------------------------
+// CASO 2: INPUTS Y TEXTAREAS NORMALES (NO REACT)
+// -------------------------------------------------------------------------
+  if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+    console.log("[OT] Standard Input Strategy");
+    element.focus();
+    
+    // Para inputs nativos, setear valor directamente suele funcionar
+    const nativeSetter = Object.getOwnPropertyDescriptor(
+      element.constructor.prototype, "value"
+    )?.set;
+    
+    if (nativeSetter) {
+      nativeSetter.call(element, text);
+      triggerInputEvents(element);
+      return { success: true, method: "native-setter" };
+    } else {
+      element.value = text;
+      triggerInputEvents(element);
+      return { success: true, method: "direct-value" };
     }
   }
 
-  // Ningún método funcionó
-  console.log("[OT] All insertion methods failed");
-  return { success: false, method: "none" };
+  // -------------------------------------------------------------------------
+// CASO 3: OTROS CONTENTEDITABLE GENÉRICOS
+// -------------------------------------------------------------------------
+  try {
+    element.focus();
+    document.execCommand('selectAll', false, undefined);
+    await new Promise(r => setTimeout(r, 10));
+    if (document.execCommand('insertText', false, text)) {
+      return { success: true, method: "generic-exec" };
+    }
+  } catch (e) {
+    console.error(e);
+  }
+
+  return { success: false, method: "unknown" };
 };
 
 // ============================================================================
-// TRANSLATION HANDLERS
+// HANDLERS DE EVENTOS
 // ============================================================================
 
-// Handle input field translation (WRITING - usa writeLanguage)
 const handleInputTranslation = async (element: HTMLElement) => {
   let text = "";
-
-  // Guardar referencia al elemento
   const targetElement = element;
 
-  if (
-    targetElement instanceof HTMLInputElement ||
-    targetElement instanceof HTMLTextAreaElement
-  ) {
+  if (targetElement instanceof HTMLInputElement || targetElement instanceof HTMLTextAreaElement) {
     text = targetElement.value;
   } else if (targetElement.isContentEditable) {
     text = targetElement.innerText || targetElement.textContent || "";
@@ -625,8 +275,7 @@ const handleInputTranslation = async (element: HTMLElement) => {
     return;
   }
 
-  const rect = targetElement.getBoundingClientRect();
-  showLoading(rect.left, rect.top - 60);
+  showLoading();
 
   try {
     const config = await getConfig();
@@ -635,12 +284,8 @@ const handleInputTranslation = async (element: HTMLElement) => {
       return;
     }
 
-    // Usar writeLanguage para campos de entrada (escritura)
-    const targetLang =
-      SUPPORTED_LANGUAGES.find((l) => l.code === config.writeLanguage)?.name ||
-      "English";
+    const targetLang = SUPPORTED_LANGUAGES.find((l) => l.code === config.writeLanguage)?.name || "English";
 
-    // Traducir usando background script
     const translated = await sendToBackground<string>({
       type: "TRANSLATE",
       payload: {
@@ -652,94 +297,64 @@ const handleInputTranslation = async (element: HTMLElement) => {
       },
     });
 
-    // Cerrar loading
     removePopup();
 
-    // Intentar insertar el texto
     const result = await insertTextIntoElement(targetElement, translated);
 
     if (result.success) {
       showNotification(`✓ Translated to ${targetLang}!`);
     } else {
-      // Último fallback: copiar al portapapeles
       await navigator.clipboard.writeText(translated);
-      showNotification("⚠ Translated! Paste with Ctrl+V", "warning");
+      showNotification("⚠ Auto-insert failed. Text copied to clipboard.", "warning");
     }
   } catch (error) {
-    console.error("[OT] Translation error:", error);
-    showNotification("Translation failed. Check if Ollama is running.", "error");
+    console.error("[OT] Error:", error);
+    showNotification("Translation failed. Check Ollama.", "error");
   }
 };
 
-// Handle selection translation (READING - usa readLanguage)
 const handleSelectionTranslation = async () => {
   const selection = window.getSelection();
   const text = selection?.toString().trim();
 
-  if (!text) {
-    showNotification("No text selected", "error");
-    return;
-  }
+  if (!text) return;
 
-  const range = selection?.getRangeAt(0);
-  const rect = range?.getBoundingClientRect();
-  const x = rect?.left || 100;
-  const y = (rect?.bottom || 100) + 10;
-
-  showLoading(x, y);
+  showLoading();
 
   try {
     const config = await getConfig();
     if (!config.selectedModel) {
-      showNotification("Please select a model in settings", "error");
+      showNotification("Select a model first", "error");
       return;
     }
 
-    // Usar readLanguage para texto seleccionado (lectura)
-    const targetLang =
-      SUPPORTED_LANGUAGES.find((l) => l.code === config.readLanguage)?.name ||
-      "Spanish";
-
-    // Traducir usando background script
+    const targetLang = SUPPORTED_LANGUAGES.find((l) => l.code === config.readLanguage)?.name || "Spanish";
     const translated = await sendToBackground<string>({
       type: "TRANSLATE",
-      payload: {
-        text,
-        targetLanguage: targetLang,
-        model: config.selectedModel,
-        host: config.ollamaHost,
-        port: config.ollamaPort,
-      },
+      payload: { text, targetLanguage: targetLang, model: config.selectedModel, host: config.ollamaHost, port: config.ollamaPort },
     });
 
-    showTranslation(translated, x, y);
+    showTranslation(translated);
   } catch (error) {
-    console.error("[OT] Translation error:", error);
-    showNotification("Translation failed. Check if Ollama is running.", "error");
+    showNotification("Translation failed.", "error");
   }
 };
 
-// Keyboard handler
 const handleKeyDown = async (e: KeyboardEvent) => {
+  if (e.key === "Escape" && currentPopup) { removePopup(); return; }
+
   if (e.altKey && (e.key === "t" || e.key === "T")) {
     e.preventDefault();
     e.stopPropagation();
-
     const activeElement = document.activeElement;
-    const isInputField =
-      activeElement instanceof HTMLInputElement ||
-      activeElement instanceof HTMLTextAreaElement ||
-      (activeElement instanceof HTMLElement && activeElement.isContentEditable);
+    const isInput = activeElement instanceof HTMLElement && (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement || activeElement.isContentEditable);
 
-    if (isInputField) {
-      await handleInputTranslation(activeElement as HTMLElement);
-    } else {
-      await handleSelectionTranslation();
-    }
+    if (isInput) await handleInputTranslation(activeElement as HTMLElement);
+    else await handleSelectionTranslation();
   }
 };
 
-// Initialize
+// Init
 injectStyles();
 document.addEventListener("keydown", handleKeyDown, true);
-console.log("🌐 Ollama Translator loaded - Press Alt+T to translate");
+console.log("Ollama Translator loaded");
