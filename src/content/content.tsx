@@ -1,6 +1,23 @@
 import { getConfig } from "../services/storage";
-import { OllamaService } from "../services/ollama";
 import { SUPPORTED_LANGUAGES } from "../lib/types";
+
+// Helper para enviar mensajes al background
+function sendToBackground<T>(message: {
+  type: string;
+  payload?: unknown;
+}): Promise<T> {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(message, (response) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+      } else if (response?.success) {
+        resolve(response.data);
+      } else {
+        reject(new Error(response?.error || "Unknown error"));
+      }
+    });
+  });
+}
 
 // Calculate reading time: ~200 WPM, min 2s, max 30s
 const calculateReadingTime = (text: string): number => {
@@ -12,7 +29,7 @@ const calculateReadingTime = (text: string): number => {
 // Inject styles
 const injectStyles = () => {
   if (document.getElementById("ollama-translator-styles")) return;
-  
+
   const style = document.createElement("style");
   style.id = "ollama-translator-styles";
   style.textContent = `
@@ -177,16 +194,16 @@ const showLoading = (x: number, y: number) => {
 // Show translation popup
 const showTranslation = (text: string, x: number, y: number) => {
   removePopup();
-  
+
   const popup = document.createElement("div");
   popup.className = "ot-popup";
   popup.style.left = `${Math.min(x, window.innerWidth - 380)}px`;
   popup.style.top = `${Math.max(10, y)}px`;
-  
+
   const readingTime = calculateReadingTime(text);
   let progress = 100;
   const startTime = Date.now();
-  
+
   popup.innerHTML = `
     <div class="ot-header">
       <span class="ot-title">Translation</span>
@@ -201,35 +218,37 @@ const showTranslation = (text: string, x: number, y: number) => {
     </div>
     <div class="ot-hint">Hover to pause</div>
   `;
-  
+
   document.body.appendChild(popup);
   currentPopup = popup;
-  
-  // Event listeners
+
   popup.querySelector(".ot-close")?.addEventListener("click", removePopup);
   popup.querySelector(".ot-copy")?.addEventListener("click", async () => {
     await navigator.clipboard.writeText(text);
     showNotification("Copied to clipboard!");
   });
-  
-  popup.addEventListener("mouseenter", () => { isPaused = true; });
-  popup.addEventListener("mouseleave", () => { isPaused = false; });
-  
-  // Progress timer
+
+  popup.addEventListener("mouseenter", () => {
+    isPaused = true;
+  });
+  popup.addEventListener("mouseleave", () => {
+    isPaused = false;
+  });
+
   const progressFill = popup.querySelector(".ot-progress-fill") as HTMLElement;
   const hint = popup.querySelector(".ot-hint") as HTMLElement;
-  
+
   progressInterval = window.setInterval(() => {
     if (isPaused) {
       hint.textContent = "Paused - move mouse away to continue";
       return;
     }
     hint.textContent = "Hover to pause";
-    
+
     const elapsed = Date.now() - startTime;
     progress = Math.max(0, 100 - (elapsed / readingTime) * 100);
     progressFill.style.width = `${progress}%`;
-    
+
     if (progress <= 0) removePopup();
   }, 50);
 };
@@ -237,8 +256,11 @@ const showTranslation = (text: string, x: number, y: number) => {
 // Handle input field translation
 const handleInputTranslation = async (element: HTMLElement) => {
   let text = "";
-  
-  if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+
+  if (
+    element instanceof HTMLInputElement ||
+    element instanceof HTMLTextAreaElement
+  ) {
     text = element.value;
     element.select();
   } else if (element.isContentEditable) {
@@ -248,38 +270,52 @@ const handleInputTranslation = async (element: HTMLElement) => {
     window.getSelection()?.removeAllRanges();
     window.getSelection()?.addRange(range);
   }
-  
+
   if (!text.trim()) {
     showNotification("No text to translate", true);
     return;
   }
-  
+
   const rect = element.getBoundingClientRect();
   showLoading(rect.left, rect.top - 60);
-  
+
   try {
     const config = await getConfig();
     if (!config.selectedModel) {
       showNotification("Please select a model in settings", true);
       return;
     }
-    
-    const ollama = new OllamaService(config.ollamaHost, config.ollamaPort);
-    const targetLang = SUPPORTED_LANGUAGES.find(l => l.code === config.targetLanguage)?.name || "English";
-    const translated = await ollama.translate(text, targetLang, config.selectedModel);
-    
-    // Replace text
-    if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+
+    const targetLang =
+      SUPPORTED_LANGUAGES.find((l) => l.code === config.targetLanguage)?.name ||
+      "English";
+
+    // Usar background script para la traducción
+    const translated = await sendToBackground<string>({
+      type: "TRANSLATE",
+      payload: {
+        text,
+        targetLanguage: targetLang,
+        model: config.selectedModel,
+        host: config.ollamaHost,
+        port: config.ollamaPort,
+      },
+    });
+
+    if (
+      element instanceof HTMLInputElement ||
+      element instanceof HTMLTextAreaElement
+    ) {
       element.value = translated;
       element.dispatchEvent(new Event("input", { bubbles: true }));
     } else if (element.isContentEditable) {
       element.innerText = translated;
       element.dispatchEvent(new Event("input", { bubbles: true }));
     }
-    
+
     showNotification("Text translated successfully!");
   } catch (error) {
-    console.error("Translation error:", error);
+    console.error("[OT] Translation error:", error);
     showNotification("Translation failed. Check if Ollama is running.", true);
   }
 };
@@ -288,33 +324,45 @@ const handleInputTranslation = async (element: HTMLElement) => {
 const handleSelectionTranslation = async () => {
   const selection = window.getSelection();
   const text = selection?.toString().trim();
-  
+
   if (!text) {
     showNotification("No text selected", true);
     return;
   }
-  
+
   const range = selection?.getRangeAt(0);
   const rect = range?.getBoundingClientRect();
   const x = rect?.left || 100;
   const y = (rect?.bottom || 100) + 10;
-  
+
   showLoading(x, y);
-  
+
   try {
     const config = await getConfig();
     if (!config.selectedModel) {
       showNotification("Please select a model in settings", true);
       return;
     }
-    
-    const ollama = new OllamaService(config.ollamaHost, config.ollamaPort);
-    const targetLang = SUPPORTED_LANGUAGES.find(l => l.code === config.targetLanguage)?.name || "English";
-    const translated = await ollama.translate(text, targetLang, config.selectedModel);
-    
+
+    const targetLang =
+      SUPPORTED_LANGUAGES.find((l) => l.code === config.targetLanguage)?.name ||
+      "English";
+
+    // Usar background script para la traducción
+    const translated = await sendToBackground<string>({
+      type: "TRANSLATE",
+      payload: {
+        text,
+        targetLanguage: targetLang,
+        model: config.selectedModel,
+        host: config.ollamaHost,
+        port: config.ollamaPort,
+      },
+    });
+
     showTranslation(translated, x, y);
   } catch (error) {
-    console.error("Translation error:", error);
+    console.error("[OT] Translation error:", error);
     showNotification("Translation failed. Check if Ollama is running.", true);
   }
 };
@@ -324,13 +372,13 @@ const handleKeyDown = async (e: KeyboardEvent) => {
   if (e.altKey && (e.key === "t" || e.key === "T")) {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const activeElement = document.activeElement;
     const isInputField =
       activeElement instanceof HTMLInputElement ||
       activeElement instanceof HTMLTextAreaElement ||
       (activeElement instanceof HTMLElement && activeElement.isContentEditable);
-    
+
     if (isInputField) {
       await handleInputTranslation(activeElement as HTMLElement);
     } else {

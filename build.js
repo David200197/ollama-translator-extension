@@ -231,6 +231,14 @@ async function build() {
     });
     console.log('✓ content.js');
 
+    // Build background script
+    await esbuild.build({
+      ...commonOptions,
+      entryPoints: ['src/background/background.ts'],
+      outfile: 'dist/background.js',
+    });
+    console.log('✓ background.js');
+
     // Write CSS
     fs.writeFileSync('dist/styles.css', globalCSS);
     console.log('✓ styles.css');

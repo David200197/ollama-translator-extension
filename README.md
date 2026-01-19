@@ -1,3 +1,4 @@
+```markdown
 # ⚡ Ollama Translator
 
 A Chrome extension for instant text translation using local Ollama AI.
@@ -33,6 +34,8 @@ Press `Alt+T` to translate text anywhere on the web!
 5. Enable **Developer mode** (top right)
 6. Click **Load unpacked**
 7. Select the `dist` folder
+8. **Important:** Copy the extension ID (shown under the extension name)
+9. Configure Ollama CORS (see below)
 
 ### Development
 
@@ -40,6 +43,74 @@ Press `Alt+T` to translate text anywhere on the web!
 npm install     # Install dependencies
 npm run build   # Build extension
 npm run watch   # Watch mode for development
+```
+
+## 🔧 Ollama CORS Configuration
+
+The extension uses a background service worker to communicate with Ollama. You need to configure Ollama to allow requests from your extension.
+
+### Find Your Extension ID
+
+1. Go to `chrome://extensions/`
+2. Find "Ollama Translator"
+3. Copy the ID (e.g., `icahfbijpkpkenmnfnkjgnllekgplcmi`)
+
+### Configure OLLAMA_ORIGINS
+
+#### Windows
+
+1. Press `Win + R`, type `sysdm.cpl`, press Enter
+2. Go to **Advanced** tab → **Environment Variables**
+3. Under "System variables", click **New**
+4. Variable name: `OLLAMA_ORIGINS`
+5. Variable value: `chrome-extension://YOUR_EXTENSION_ID`
+6. Click OK and close all dialogs
+7. **Restart Ollama** (quit from system tray and reopen)
+
+> **Note:** You may need to log out and log back in for the environment variable to take effect.
+
+#### Linux (systemd)
+
+```bash
+sudo systemctl edit ollama.service
+```
+
+Add the following:
+
+```ini
+[Service]
+Environment="OLLAMA_ORIGINS=chrome-extension://YOUR_EXTENSION_ID"
+```
+
+Then restart Ollama:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart ollama
+```
+
+#### macOS
+
+```bash
+launchctl setenv OLLAMA_ORIGINS "chrome-extension://YOUR_EXTENSION_ID"
+```
+
+Then restart Ollama.
+
+#### Allow All Origins (Less Secure)
+
+If you prefer to allow all origins (not recommended for production):
+
+```
+OLLAMA_ORIGINS=*
+```
+
+### Verify Configuration
+
+After restarting Ollama, verify it's running:
+
+```bash
+ollama list
 ```
 
 ## 🎮 Usage
@@ -96,19 +167,41 @@ Maximum: 30 seconds
 ```
 ollama-translator/
 ├── src/
+│   ├── background/       # Service worker for API calls
 │   ├── components/ui/    # Shadcn UI components
+│   ├── content/          # Content script (Alt+T handler)
 │   ├── lib/              # Types & utils
-│   ├── services/         # Ollama & storage services
-│   ├── popup/            # Extension popup
 │   ├── options/          # Settings page
-│   ├── content/          # Content script
-│   └── manifest.json     # Chrome manifest
+│   ├── popup/            # Extension popup
+│   ├── services/         # Ollama & storage services
+│   └── manifest.json     # Chrome manifest v3
 ├── assets/               # Icons
 ├── dist/                 # Built extension
 ├── build.js              # Build script
 └── package.json
 ```
 
+## 🔍 Troubleshooting
+
+### "Please select a model in settings"
+- Open extension settings and select an Ollama model
+- Make sure Ollama is running (`ollama list`)
+
+### "Translation failed" or CORS errors
+- Verify `OLLAMA_ORIGINS` is set correctly
+- Restart Ollama after setting the environment variable
+- On Windows, you may need to log out and back in
+
+### Extension ID changed
+- If you remove and reload the extension, Chrome assigns a new ID
+- Update `OLLAMA_ORIGINS` with the new extension ID
+- Restart Ollama
+
+### Ollama not connecting
+- Check if Ollama is running: `ollama list`
+- Verify host/port in extension settings (default: `localhost:11434`)
+
 ## 📄 License
 
 MIT
+```

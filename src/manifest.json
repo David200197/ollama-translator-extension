@@ -5,6 +5,10 @@
   "description": "Translate text instantly using Ollama local AI with Alt+T shortcut",
   "permissions": ["storage", "activeTab"],
   "host_permissions": ["http://localhost:*/*", "http://127.0.0.1:*/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

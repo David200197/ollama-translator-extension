@@ -1,3 +1,5 @@
 dist
 local
 node_modules
+# mkctx - generated context
+mkctx/
