@@ -11,8 +11,9 @@ Press `Alt+T` to translate text anywhere on the web!
 
 - 🔒 **100% Local** - All translations happen on your machine using Ollama
 - ⚡ **Quick Translate** - Press `Alt+T` to translate instantly
-- 📝 **Input Fields** - Translates and replaces text in inputs/textareas
-- 👁️ **Selection** - Shows translation popup for selected text
+- 📖 **Reading Mode** - Translate selected text to your preferred reading language
+- ✏️ **Writing Mode** - Translate input fields to your preferred writing language
+- 📝 **Smart Detection** - Automatically detects if you're reading or writing
 - ⏱️ **Smart Timing** - Popup duration based on reading speed (~200 WPM)
 - ⏸️ **Hover to Pause** - Pause the popup timer by hovering
 - 🌍 **30+ Languages** - Support for major world languages
@@ -115,18 +116,18 @@ ollama list
 
 ## 🎮 Usage
 
-### Translate Input Field
+### 📖 Reading Mode (Selected Text)
+1. Select any text on a webpage
+2. Press **`Alt + T`**
+3. 📌 Translation appears in a popup (in your **Reading Language**)
+4. 🖱️ Hover over popup to pause the timer
+5. 📋 Click "Copy" to copy translation
+
+### ✏️ Writing Mode (Input Fields)
 1. Click on any text input, textarea, or contenteditable element
 2. Type or paste your text
 3. Press **`Alt + T`**
-4. ✅ Text is translated and replaced automatically
-
-### Translate Selected Text
-1. Select any text on a webpage
-2. Press **`Alt + T`**
-3. 📌 Translation appears in a popup
-4. 🖱️ Hover over popup to pause the timer
-5. 📋 Click "Copy" to copy translation
+4. ✅ Text is translated and replaced automatically (in your **Writing Language**)
 
 ## ⚙️ Configuration
 
@@ -137,7 +138,17 @@ Click the extension icon → **Settings** to configure:
 | **Host** | Ollama server hostname | `localhost` |
 | **Port** | Ollama server port | `11434` |
 | **Model** | Select from installed Ollama models | - |
-| **Target Language** | Translation target language | `English` |
+| **Reading Language** | Language for translating selected text | `Spanish` |
+| **Writing Language** | Language for translating input fields | `English` |
+
+### 🌐 Language Configuration Examples
+
+| Use Case | Reading Language | Writing Language |
+|----------|------------------|------------------|
+| Spanish speaker browsing English sites | Spanish | English |
+| English speaker learning French | English | French |
+| Developer writing docs in English | Spanish | English |
+| Bilingual user (ES/EN) | Spanish | English |
 
 ## 🌍 Supported Languages
 
@@ -200,6 +211,12 @@ ollama-translator/
 ### Ollama not connecting
 - Check if Ollama is running: `ollama list`
 - Verify host/port in extension settings (default: `localhost:11434`)
+
+### Text not being inserted in some websites
+- Some websites (WhatsApp Web, Slack, etc.) use complex editors
+- The extension tries 6 different methods to insert text
+- If all methods fail, the translation is copied to clipboard
+- Simply press `Ctrl+V` to paste
 
 ## 📄 License
 
