@@ -1,0 +1,114 @@
+# ⚡ Ollama Translator
+
+A Chrome extension for instant text translation using local Ollama AI.
+
+Built with **React**, **TypeScript**, **Shadcn/UI components**, and **esbuild**.
+
+Press `Alt+T` to translate text anywhere on the web!
+
+## ✨ Features
+
+- 🔒 **100% Local** - All translations happen on your machine using Ollama
+- ⚡ **Quick Translate** - Press `Alt+T` to translate instantly
+- 📝 **Input Fields** - Translates and replaces text in inputs/textareas
+- 👁️ **Selection** - Shows translation popup for selected text
+- ⏱️ **Smart Timing** - Popup duration based on reading speed (~200 WPM)
+- ⏸️ **Hover to Pause** - Pause the popup timer by hovering
+- 🌍 **30+ Languages** - Support for major world languages
+- 🎨 **Beautiful UI** - Built with Shadcn/UI components
+
+## 📋 Requirements
+
+- [Ollama](https://ollama.ai) installed and running locally
+- A language model installed (e.g., `ollama pull llama3.2`)
+
+## 🚀 Installation
+
+### Quick Install
+
+1. Download/clone this repository
+2. Run `npm install`
+3. Run `npm run build`
+4. Open Chrome → `chrome://extensions/`
+5. Enable **Developer mode** (top right)
+6. Click **Load unpacked**
+7. Select the `dist` folder
+
+### Development
+
+```bash
+npm install     # Install dependencies
+npm run build   # Build extension
+npm run watch   # Watch mode for development
+```
+
+## 🎮 Usage
+
+### Translate Input Field
+1. Click on any text input, textarea, or contenteditable element
+2. Type or paste your text
+3. Press **`Alt + T`**
+4. ✅ Text is translated and replaced automatically
+
+### Translate Selected Text
+1. Select any text on a webpage
+2. Press **`Alt + T`**
+3. 📌 Translation appears in a popup
+4. 🖱️ Hover over popup to pause the timer
+5. 📋 Click "Copy" to copy translation
+
+## ⚙️ Configuration
+
+Click the extension icon → **Settings** to configure:
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Host** | Ollama server hostname | `localhost` |
+| **Port** | Ollama server port | `11434` |
+| **Model** | Select from installed Ollama models | - |
+| **Target Language** | Translation target language | `English` |
+
+## 🌍 Supported Languages
+
+English, Spanish, French, German, Italian, Portuguese, Russian, Chinese, Japanese, Korean, Arabic, Hindi, Dutch, Polish, Turkish, Vietnamese, Thai, Swedish, Danish, Finnish, Norwegian, Czech, Greek, Hebrew, Hungarian, Indonesian, Malay, Romanian, Slovak, Ukrainian
+
+## 📖 Reading Time Algorithm
+
+The popup display time is calculated based on average reading speed:
+
+```
+Formula: (word_count / 200 WPM) × 60 × 1000 + 1000ms base
+Minimum: 2 seconds
+Maximum: 30 seconds
+```
+
+## 🛠️ Tech Stack
+
+- **React 18** - UI library
+- **TypeScript** - Type safety
+- **Shadcn/UI** - UI components (Button, Card, Input, Select, Badge)
+- **Lucide React** - Icons
+- **esbuild** - Fast bundler
+- **Ollama** - Local AI inference
+
+## 📁 Project Structure
+
+```
+ollama-translator/
+├── src/
+│   ├── components/ui/    # Shadcn UI components
+│   ├── lib/              # Types & utils
+│   ├── services/         # Ollama & storage services
+│   ├── popup/            # Extension popup
+│   ├── options/          # Settings page
+│   ├── content/          # Content script
+│   └── manifest.json     # Chrome manifest
+├── assets/               # Icons
+├── dist/                 # Built extension
+├── build.js              # Build script
+└── package.json
+```
+
+## 📄 License
+
+MIT
